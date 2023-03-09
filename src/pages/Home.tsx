@@ -144,7 +144,10 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 			});
 
 			// val if total number each resultDataChunks is equal to total number of courses
-			if (resultDataChunks.some((row) => row.length !== courses.length)) {
+			if (
+				resultDataChunks.length <= 0 ||
+				resultDataChunks.some((row) => row.length !== courses.length)
+			) {
 				return setToggleAlert("Oops, invalid result data format.");
 			}
 
@@ -257,7 +260,10 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 						</div>
 					</form>
 					<div className="flex justify-content-center">
-						<div className="p-10 text-center --result-container" ref={resultContainer}>
+						<div
+							className="p-10 text-center --result-container"
+							ref={resultContainer}
+						>
 							{showCalcResult ? (
 								<>
 									<div className="flex justify-content-end m-b-10">
