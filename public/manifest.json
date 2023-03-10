@@ -1,11 +1,13 @@
 {
 	"name": "GpCalc",
 	"short_name": "GpCalc",
-	"start_url": "index.html",
+	"start_url": "./",
+	"scope": "./",
 	"display": "standalone",
 	"background_color": "#ffffff",
 	"theme_color": "#efefef",
 	"orientation": "portrait-primary",
+	"description": "Dynamic grade point(GP) calculator software",
 	"icons": [
 		{
 			"src": "./icons/android-icon-36x36.png",
