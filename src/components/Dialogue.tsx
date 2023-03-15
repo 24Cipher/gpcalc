@@ -62,7 +62,7 @@ export default function Dialogue({
 	}, [handleCancel]);
 
 	return (
-		<div role="dialog" className="modal dark">
+		<div role="dialog" className="modal dark dialog">
 			<div
 				className="modal-content"
 				ref={modalContent}
