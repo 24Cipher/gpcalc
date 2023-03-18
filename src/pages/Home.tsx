@@ -268,6 +268,16 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 							</li>
 							<li>You can also use NIL in place of 0 (zero)</li>
 							<li>Use AB (ie. absent) or 0 (zero) for an absentee</li>
+							<li>
+								<a
+									href="result-table-sample.png"
+									target="_blank"
+									rel="noreferrer"
+								>
+									Here
+								</a>
+								<span>{" is a sample of a result table."}</span>
+							</li>
 						</ul>
 					</div>
 					<div className="p-tb-10 flex justify-content-end m-t-20">
