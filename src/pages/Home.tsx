@@ -11,15 +11,37 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 	const [toggleAlert, setToggleAlert] = useState<null | string>(null);
 	const [toggleAddCourses, setToggleAddCourses] = useState(false);
 	const [toggleClearCourses, setToggleClearCourses] = useState(false);
+	const [toggleReviewCourses, setToggleReviewCourses] = useState(false);
 
 	const [courses, setCourses] = useState<null | CourseData[]>(null);
 
-	const [isComposite, setIsComposite] = useState(true);
 	const resultInput = useRef<null | HTMLTextAreaElement>(null);
+	const [useAddedCourses, setUseAddedCourses] = useState(false);
+
+	// processed result data
+	const firstThreeColsCount = useRef(3); // (S/N, Scholar's Name, and Matric No.)
+	const lastFiveColsCount = useRef(5); // (Total Units, Units Passed, Carry Over Units, GP, GPA)
+	const [cleanedResultData, setCleanedResultData] = useState<null | string[]>(
+		null
+	);
 
 	const resultContainer = useRef<null | HTMLDivElement>(null);
 	const [showCalcResult, setShowCalcResult] = useState<null | string[][]>(null);
 	const [resultTableCopied, setResultTableCopied] = useState(false);
+
+	useEffect(() => {
+		// clear init body styles
+		clearBodyStyles();
+		// get couses stored in localstorage
+		setCourses(handleGetLocalCourses());
+	}, [clearBodyStyles]);
+
+	useEffect(() => {
+		if (!courses || courses.length <= 0) {
+			setUseAddedCourses(false);
+			setShowCalcResult(null);
+		}
+	}, [courses]);
 
 	const handleGetLocalCourses = () => {
 		let localCourses = window.localStorage.getItem("courses");
@@ -29,13 +51,6 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 		return JSON.parse(localCourses) as CourseData[];
 	};
 
-	useEffect(() => {
-		clearBodyStyles();
-
-		// get couses stored in localstorage
-		setCourses(handleGetLocalCourses());
-	}, []);
-
 	const handleAddCourses = useCallback(
 		(size: string) => {
 			setToggleAddCourses(false);
@@ -44,7 +59,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 			if (!/^\d+$/.test(size)) {
 				return setTimeout(
 					() => setToggleAlert("Please enter a valid numeral."),
-					100
+					50
 				);
 			}
 
@@ -56,8 +71,8 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 
 			// store courses
 			const coursesToStore = (courses || []).concat(newCourses);
-			window.localStorage.setItem("courses", JSON.stringify(coursesToStore));
 			setCourses(coursesToStore);
+			window.localStorage.setItem("courses", JSON.stringify(coursesToStore));
 		},
 		[courses]
 	);
@@ -84,62 +99,25 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 		[courses]
 	);
 
-	const handleCalculation = useCallback(
-		(e: React.FormEvent) => {
-			e.preventDefault();
-
-			// clear calculated result display container
-			setShowCalcResult(null);
+	const handleCalculation = useCallback(() => {
+		try {
+			setToggleReviewCourses(false);
 
 			// val courses
 			if (!courses || courses.length <= 0) {
-				return setToggleAlert("Oops, please add course(s) to continue.");
+				throw new Error("Oops, please add course(s) to continue.");
 			}
-
-			// get result inputed result
-			const resultData = resultInput.current?.value.trim() || "";
-
-			// clean result data
-			let cleanedResultData = resultData
-				.split(/(\t|\n)/)
-				.filter((e) => e !== "\t" && e !== "\n")
-				.filter((e) => e.trim() !== "")
-				.reduce((arr: string[], itm: string) => {
-					itm = itm.trim();
-					if (/^(\d{1,3}[A-F]+)$/i.test(itm)) {
-						itm = itm.replace(/[A-F]/gi, "");
-					}
-					if (/^\d{1,3}$/.test(itm)) {
-						arr.push(itm);
-					} else if ("-" === itm) {
-						arr.push("-");
-					} else if (/^(NIL|AB)$/i.test(itm)) {
-						arr.push("0");
-					} else {
-						arr.push(itm);
-					}
-					return arr;
-				}, []);
-
-			// remove result data headings
-			const firstThreeColsCount = 3; // (S/N, Scholar's Name, and Matric No.)
-			const lastFiveColsCount = 5; // (Total Units, Units Passed, Carry Over Units, GP, GPA)
-			cleanedResultData.splice(
-				0,
-				firstThreeColsCount + courses.length + lastFiveColsCount
-			);
-
-			// remove result data units
-			cleanedResultData.splice(0, courses.length);
 
 			// tranform result data into array chunks and extract each row first three cols
 			// each chunk represents each row of the result
 			const resultDataFirstThreeCols: string[][] = [];
 			const resultDataChunks: string[][] = arrayChunk(
-				firstThreeColsCount + courses.length,
-				cleanedResultData
+				firstThreeColsCount.current + courses.length,
+				cleanedResultData || []
 			).map((row) => {
-				resultDataFirstThreeCols.push(row.splice(0, firstThreeColsCount));
+				resultDataFirstThreeCols.push(
+					row.splice(0, firstThreeColsCount.current)
+				);
 				return row;
 			});
 
@@ -148,7 +126,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				resultDataChunks.length <= 0 ||
 				resultDataChunks.some((row) => row.length !== courses.length)
 			) {
-				return setToggleAlert("Oops, invalid result data format.");
+				throw new Error("Oops, invalid result data format.");
 			}
 
 			// perform calculation
@@ -167,9 +145,104 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 
 			// display calc result
 			setShowCalcResult(calcResult);
-			resultContainer.current?.scrollIntoView({ block: "start" });
+
+			// scroll into table
+			setTimeout(
+				() => resultContainer.current?.scrollIntoView({ block: "start" }),
+				50
+			);
+		} catch (error) {
+			setTimeout(() => setToggleAlert((error as Error).message), 50);
+		}
+	}, [cleanedResultData, courses]);
+
+	const handleCleanResultdata = useCallback(
+		(e: React.FormEvent) => {
+			try {
+				e.preventDefault();
+
+				// reset neccessary states
+				setShowCalcResult(null);
+				setCleanedResultData(null);
+
+				// get result inputed result
+				const resultData = resultInput.current?.value.trim() || "";
+
+				// clean result data
+				let _cleanedResultData = resultData
+					.split(/(\t|\n)/)
+					.filter((e) => e !== "\t" && e !== "\n")
+					.filter((e) => e.trim() !== "")
+					.reduce((arr: string[], itm: string) => {
+						itm = itm.trim();
+						if (/^(\d{1,3}[A-F]+)$/i.test(itm)) {
+							itm = itm.replace(/[A-F]/gi, "");
+						}
+						if (/^\d{1,3}$/.test(itm)) {
+							arr.push(itm);
+						} else if ("-" === itm) {
+							arr.push("-");
+						} else if (/^(NIL|AB)$/i.test(itm)) {
+							arr.push("0");
+						} else {
+							arr.push(itm);
+						}
+						return arr;
+					}, []);
+
+				// get result data headings
+				const headingsLastItemIndex = _cleanedResultData.findIndex(
+					(e) => e.toLowerCase() === "gpa"
+				); // ie. GPA column
+				if (headingsLastItemIndex === -1) {
+					throw new Error("Oops, invalid result data format.");
+				}
+				const headings = _cleanedResultData.splice(
+					0,
+					headingsLastItemIndex + 1
+				);
+
+				// get result data course titles
+				const _courseTitles = headings.slice(
+					firstThreeColsCount.current,
+					headings.length - lastFiveColsCount.current
+				);
+
+				// get result data course units
+				const _courseUnits = _cleanedResultData
+					.splice(0, _courseTitles.length)
+					.map((e) => parseInt(e))
+					.map((e) => (isNaN(e) ? 0 : e));
+
+				// update util states
+				// setCourseTitles(_courseTitles);
+				// setCourseUnits(_courseUnits);
+				setCleanedResultData(_cleanedResultData);
+
+				// val whether to add courses
+				if (!useAddedCourses) {
+					setCourses(null);
+					const newCourses: CourseData[] = [];
+					for (let i = 0; i < _courseTitles.length; i++) {
+						newCourses.push([_courseTitles[i], _courseUnits[i], 40]);
+					}
+					const coursesToStore = ([] as CourseData[]).concat(newCourses);
+					setTimeout(() => {
+						setCourses(coursesToStore);
+						window.localStorage.setItem(
+							"courses",
+							JSON.stringify(coursesToStore)
+						);
+					}, 50);
+				}
+
+				// toggle added courses confirmation before calculation
+				setToggleReviewCourses(true);
+			} catch (error) {
+				setToggleAlert((error as Error).message);
+			}
 		},
-		[courses]
+		[useAddedCourses]
 	);
 
 	return (
@@ -211,24 +284,31 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 							Add Courses
 						</button>
 					</div>
-					<form onSubmit={handleCalculation}>
+					<form onSubmit={handleCleanResultdata}>
 						<div className="p-tb-10">
 							<h3>Courses</h3>
 							<div className="flex flex-wrap">
-								{courses?.map((d, _i) => (
-									<Course
-										key={_i}
-										data={d}
-										index={_i}
-										courseUpdate={handleCourseUpdate}
-									/>
-								))}
+								{courses ? (
+									courses?.map((d, _i) => (
+										<Course
+											key={_i}
+											data={d}
+											index={_i}
+											courseUpdate={handleCourseUpdate}
+										/>
+									))
+								) : (
+									<p style={{ marginTop: "10px", textAlign: "left" }}>
+										Course(s) are automatically added, optionally you can use
+										the "Add Courses" button to manually add course(s).
+									</p>
+								)}
 							</div>
 						</div>
 						<div className="selector m-t-20">
 							<div className="selector-elems">
 								<label htmlFor="scores">
-									<h3>Scores</h3>
+									<h3>Result table</h3>
 								</label>
 								<textarea
 									className="p-10 m-t-10"
@@ -239,19 +319,25 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 									ref={resultInput}
 									required
 								/>
-								<div className="m-t-10">
-									<label>
-										<input
-											type="checkbox"
-											className="m-r-10"
-											onChange={() => setIsComposite(true)}
-											checked={isComposite}
-											required
-										/>
-										<span>Result type is composite.</span>
-									</label>
-								</div>
-								<div className="flex flex-wrap align-items-center m-t-20 --flex">
+								{courses && courses.length > 0 && (
+									<div className="m-t-10">
+										<label>
+											<input
+												type="checkbox"
+												className="m-r-10"
+												onChange={() => setUseAddedCourses(!useAddedCourses)}
+												checked={useAddedCourses}
+											/>
+											<span style={{ userSelect: "none" }}>
+												Use existing added courses
+											</span>
+										</label>
+									</div>
+								)}
+								<div
+									className="flex flex-wrap align-items-center --flex"
+									style={{ marginTop: "30px" }}
+								>
 									<button type="submit" className="p-10 m-r-10">
 										Calculate
 									</button>
@@ -259,43 +345,40 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 							</div>
 						</div>
 					</form>
-					<div className="flex justify-content-center">
-						<div
-							className="p-10 text-center --result-container"
-							ref={resultContainer}
-						>
-							{showCalcResult ? (
-								<>
-									<div className="flex justify-content-end m-b-10">
-										<button
-											className="p-5 p-lr-10"
-											style={{ marginRight: "10px" }}
-											onClick={() =>
-												copier(
-													resultContainer.current?.children[1],
-													() => {
-														setResultTableCopied(true);
-														setTimeout(() => {
-															setResultTableCopied(false);
-														}, 3 * 1000);
-													},
-													() =>
-														setToggleAlert(
-															"Copy comman failed, please try using native method."
-														)
-												)
-											}
-											disabled={resultTableCopied}
-										>
-											{resultTableCopied ? "Copied" : "Copy"}
-										</button>
-										<button
-											className="p-5 p-lr-10"
-											onClick={() => setShowCalcResult(null)}
-										>
-											Clear
-										</button>
-									</div>
+					<div className="text-center m-t-20 p-tb-20" ref={resultContainer}>
+						{showCalcResult ? (
+							<>
+								<div className="flex justify-content-end flex-wrap">
+									<button
+										className="p-5 p-lr-10"
+										style={{ marginRight: "10px" }}
+										onClick={() =>
+											copier(
+												resultContainer.current?.children[1],
+												() => {
+													setResultTableCopied(true);
+													setTimeout(() => {
+														setResultTableCopied(false);
+													}, 3 * 1000);
+												},
+												() =>
+													setToggleAlert(
+														"Copy comman failed, please try using native method."
+													)
+											)
+										}
+										disabled={resultTableCopied}
+									>
+										{resultTableCopied ? "Copied" : "Copy"}
+									</button>
+									<button
+										className="p-5 p-lr-10"
+										onClick={() => setShowCalcResult(null)}
+									>
+										Clear
+									</button>
+								</div>
+								<div className="--result-table-wrap p-tb-10">
 									<table>
 										<thead>
 											<tr>
@@ -327,11 +410,11 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 											))}
 										</tbody>
 									</table>
-								</>
-							) : (
-								"Calculated result will appear here..."
-							)}
-						</div>
+								</div>
+							</>
+						) : (
+							"Calculated result will appear here..."
+						)}
 					</div>
 				</div>
 			</main>
@@ -345,8 +428,10 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 					</button>
 				</div> */}
 				<div className="text-center doc-width p-lr-10">
-					&copy;
-					{" " + new Date().getFullYear() + " "}
+					<span>
+						&copy;
+						{" " + new Date().getFullYear() + " "}
+					</span>
 					<a
 						href="https://24cipher.com?ref=gpcalc"
 						target="_blank"
@@ -354,7 +439,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 					>
 						24Cipher Labs
 					</a>
-					{" Software License & Usage."}
+					<span>{" Software License & Usage."}</span>
 				</div>
 			</footer>
 			{toggleAddCourses && (
@@ -378,6 +463,14 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 					type={DialogueTypes.confirm}
 					callbackOk={handleClearCourses}
 					callbackCancel={() => setToggleClearCourses(false)}
+				/>
+			)}
+			{toggleReviewCourses && (
+				<Dialogue
+					info="Do you want to continue without reviewing added courses?"
+					type={DialogueTypes.confirm}
+					callbackOk={handleCalculation}
+					callbackCancel={() => setToggleReviewCourses(false)}
 				/>
 			)}
 		</>

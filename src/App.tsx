@@ -1,6 +1,6 @@
 import React, { Suspense, useCallback } from "react";
 import PageLoader from "./components/PageLoader";
-import "./css/style.css";
+import "./css/style.scss";
 
 const Home = React.lazy(() => import("./pages/Home"));
 

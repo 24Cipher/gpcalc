@@ -8,9 +8,9 @@ import React, {
 import { stickBody } from "../utils/helpers";
 
 export enum DialogueTypes {
-	alert,
-	confirm,
-	prompt,
+	alert = "alert",
+	confirm = "confirm",
+	prompt = "prompt",
 }
 
 interface DialogueProps {
@@ -27,18 +27,37 @@ export default function Dialogue({
 	callbackCancel,
 }: DialogueProps) {
 	const [promptValue, setPromptValue] = useState("");
-	const cancelBtn = useRef(null);
+
 	const okBtn = useRef(null);
+	const cancelBtn = useRef(null);
+	const promptInput = useRef<null | HTMLInputElement>(null);
+
 	const modalContent = useRef<null | HTMLDivElement>(null);
 	const [cHeight, setcHeight] = useState<undefined | number>(undefined);
 
-	const handleOk = (e: React.FormEvent) => {
-		e.preventDefault();
-		callbackOk(promptValue);
-	};
+	const handleOk = useCallback(
+		(e: React.MouseEvent<HTMLButtonElement> | KeyboardEvent) => {
+			// if it's not enter or ok button
+			if (
+				(e as KeyboardEvent).key !== "Enter" &&
+				e.currentTarget !== okBtn.current
+			) {
+				return;
+			}
+
+			// val if prompt value is empty for type "prompt"
+			if (type === DialogueTypes.prompt && promptValue === "") {
+				return promptInput.current?.focus();
+			}
+
+			callbackOk(promptValue);
+		},
+		[callbackOk, promptValue, type]
+	);
 
 	const handleCancel = useCallback(
 		(e: React.MouseEvent<HTMLButtonElement> | KeyboardEvent) => {
+			// if it's escape or cancel button
 			if (
 				callbackCancel &&
 				((e as KeyboardEvent).key === "Escape" ||
@@ -51,15 +70,20 @@ export default function Dialogue({
 	);
 
 	useEffect(() => {
+		// mount
 		stickBody();
 		setcHeight(modalContent.current?.clientHeight);
 		document.addEventListener("keydown", handleCancel);
+		document.addEventListener("keydown", handleOk);
+
+		// unmount
 		return () => {
 			stickBody();
 			setcHeight(undefined);
 			document.removeEventListener("keydown", handleCancel);
+			document.removeEventListener("keydown", handleOk);
 		};
-	}, [handleCancel]);
+	}, [handleCancel, handleOk]);
 
 	return (
 		<div role="dialog" className="modal dark dialog">
@@ -73,41 +97,46 @@ export default function Dialogue({
 				}
 			>
 				<div className="modal-body p-10">
-					<form onSubmit={handleOk}>
-						<div className="p-tb-10 p-lr-10">
-							<div>{info}</div>
-							{type === DialogueTypes.prompt && (
+					<div className="p-tb-10 p-lr-10">
+						{type === DialogueTypes.prompt ? (
+							<>
+								<label htmlFor="promptInput">{info}</label>
 								<input
 									type="number"
-									className="m-t-10 p-5"
+									id="promptInput"
+									className="m-t-10"
 									title="Only numeral(s) are allowed"
 									placeholder="Enter number of courses"
+									style={{ padding: "8px" }}
+									ref={promptInput}
 									onInput={(e) => setPromptValue(e.currentTarget.value.trim())}
 									autoFocus={true}
-									required
 								/>
-							)}
-						</div>
-						<div className="flex align-items-center justify-content-end flex-wrap m-tb-10 p-lr-10">
-							{type !== DialogueTypes.alert && (
-								<button
-									className="m-r-10"
-									type="button"
-									ref={cancelBtn}
-									onClick={(e) => handleCancel(e)}
-								>
-									Cancel
-								</button>
-							)}
+							</>
+						) : (
+							<p>{info}</p>
+						)}
+					</div>
+					<div className="flex align-items-center justify-content-end flex-wrap m-tb-10 p-lr-10">
+						{type !== DialogueTypes.alert && (
 							<button
-								type="submit"
-								ref={okBtn}
-								autoFocus={type !== DialogueTypes.prompt}
+								className="m-r-10"
+								type="button"
+								ref={cancelBtn}
+								onClick={handleCancel}
 							>
-								Ok
+								Cancel
 							</button>
-						</div>
-					</form>
+						)}
+						<button
+							type="button"
+							ref={okBtn}
+							onClick={handleOk}
+							autoFocus={type !== DialogueTypes.prompt}
+						>
+							Ok
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
