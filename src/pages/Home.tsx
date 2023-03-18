@@ -15,6 +15,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 
 	const [courses, setCourses] = useState<null | CourseData[]>(null);
 
+	const [resultData, setResultData] = useState("");
 	const resultInput = useRef<null | HTMLTextAreaElement>(null);
 	const [useAddedCourses, setUseAddedCourses] = useState(false);
 
@@ -165,9 +166,6 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				setShowCalcResult(null);
 				setCleanedResultData(null);
 
-				// get result inputed result
-				const resultData = resultInput.current?.value.trim() || "";
-
 				// clean result data
 				let _cleanedResultData = resultData
 					.split(/(\t|\n)/)
@@ -242,7 +240,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				setToggleAlert((error as Error).message);
 			}
 		},
-		[useAddedCourses]
+		[resultData, useAddedCourses]
 	);
 
 	return (
@@ -307,18 +305,41 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 						</div>
 						<div className="selector m-t-20">
 							<div className="selector-elems">
-								<label htmlFor="scores">
+								<label htmlFor="resultTable">
 									<h3>Result table</h3>
 								</label>
-								<textarea
-									className="p-10 m-t-10"
-									cols={30}
-									rows={10}
-									id="scores"
-									placeholder="Paste result table here"
-									ref={resultInput}
-									required
-								/>
+								<div className="m-t-10" style={{ position: "relative" }}>
+									{resultData !== "" && (
+										<button
+											type="button"
+											style={{
+												backgroundColor: "rgba(68, 68, 68, 0.4)",
+												color: "#fff",
+												position: "absolute",
+												top: "10px",
+												right: "10px",
+												padding: "5px 10px",
+												border: "none",
+											}}
+											onClick={() => {
+												setResultData("");
+												resultInput.current && (resultInput.current.value = "");
+											}}
+										>
+											Clear
+										</button>
+									)}
+									<textarea
+										className="p-10"
+										cols={30}
+										rows={10}
+										id="resultTable"
+										placeholder="Paste result table here"
+										onInput={(e) => setResultData(e.currentTarget.value.trim())}
+										ref={resultInput}
+										required
+									/>
+								</div>
 								{courses && courses.length > 0 && (
 									<div className="m-t-10">
 										<label>
