@@ -13,7 +13,6 @@ export default defineConfig({
 				name: "GpCalc",
 				short_name: "GpCalc",
 				start_url: ".",
-				scope: ".",
 				display: "standalone",
 				background_color: "#ffffff",
 				theme_color: "#efefef",
@@ -59,7 +58,7 @@ export default defineConfig({
 				],
 			},
 			injectRegister: "inline",
-			includeAssets: ["./result-table-sample.png"],
+			includeAssets: ["./result-table-sample.png", "./robots.txt"],
 			devOptions: {
 				enabled: true,
 			},
