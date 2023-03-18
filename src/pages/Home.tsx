@@ -274,9 +274,9 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 									target="_blank"
 									rel="noreferrer"
 								>
-									Here
+									Click here
 								</a>
-								<span>{" is a sample of a result table."}</span>
+								<span>{" to see a sample of a result table."}</span>
 							</li>
 						</ul>
 					</div>
