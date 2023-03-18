@@ -8,12 +8,12 @@ export default defineConfig({
 	plugins: [
 		react(),
 		VitePWA({
-			registerType: "prompt",
+			registerType: "autoUpdate",
 			manifest: {
 				name: "GpCalc",
 				short_name: "GpCalc",
-				start_url: "./",
-				scope: "./",
+				start_url: ".",
+				scope: ".",
 				display: "standalone",
 				background_color: "#ffffff",
 				theme_color: "#efefef",
@@ -57,6 +57,11 @@ export default defineConfig({
 						density: "4.0",
 					},
 				],
+			},
+			injectRegister: "inline",
+			includeAssets: ["./result-table-sample.png"],
+			devOptions: {
+				enabled: true,
 			},
 		}),
 	],
