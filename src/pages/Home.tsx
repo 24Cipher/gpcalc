@@ -261,7 +261,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 							</span>
 						</p>
 						<ul className="m-t-10" style={{ paddingLeft: "20px" }}>
-							<li>Do not leave any column empty</li>
+							<li>Do not leave any score column empty</li>
 							<li>
 								Use hyphen (-) in place of score for a course the student
 								does/did not offer
