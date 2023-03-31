@@ -270,13 +270,13 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 							<li>Use AB (ie. absent) or 0 (zero) for an absentee</li>
 							<li>
 								<a
-									href="result-table-sample.png"
+									href="composite-result-template.docx"
 									target="_blank"
 									rel="noreferrer"
 								>
 									Click here
 								</a>
-								<span>{" to see a sample of a result table."}</span>
+								<span>{" to see a sample of a result table template."}</span>
 							</li>
 						</ul>
 					</div>

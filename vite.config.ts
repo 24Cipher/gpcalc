@@ -58,7 +58,7 @@ export default defineConfig({
 				],
 			},
 			injectRegister: "inline",
-			includeAssets: ["./result-table-sample.png", "./robots.txt"],
+			includeAssets: ["./robots.txt", "./composite-result-template.docx"],
 			devOptions: {
 				enabled: true,
 			},
