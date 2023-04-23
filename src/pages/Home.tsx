@@ -127,7 +127,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				resultDataChunks.length <= 0 ||
 				resultDataChunks.some((row) => row.length !== courses.length)
 			) {
-				throw new Error("Oops, invalid result data format.");
+				throw new Error("Oops, invalid result sheet format.");
 			}
 
 			// perform calculation
@@ -177,21 +177,13 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				let _cleanedResultData = resultData
 					.split(/(\t|\n)/)
 					.map((e) => e.replace(/(\\t|\\n)/g, " "))
-					.filter((e) => e.trim() !== "")
+					.map((e) => e.trim())
+					.filter((e) => e !== "")
 					.reduce((arr: string[], itm: string) => {
-						itm = itm.trim();
 						if (/^(\d{1,3}[A-F]+)$/i.test(itm)) {
 							itm = itm.replace(/[A-F]/gi, "");
 						}
-						if (/^\d{1,3}$/.test(itm)) {
-							arr.push(itm);
-						} else if ("-" === itm) {
-							arr.push("-");
-						} else if (/^(NIL|AB)$/i.test(itm)) {
-							arr.push("0");
-						} else {
-							arr.push(itm);
-						}
+						arr.push(itm);
 						return arr;
 					}, []);
 
@@ -276,13 +268,13 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 							<li>Use AB (ie. absent) or 0 (zero) for an absentee</li>
 							<li>
 								<a
-									href="composite-result-template.docx"
+									href="composite-result-template.xlsx"
 									target="_blank"
 									rel="noreferrer"
 								>
 									Click here
 								</a>
-								<span>{" to see a sample of a result sheet."}</span>
+								<span>{" to download a sample of a result sheet."}</span>
 							</li>
 						</ul>
 					</div>

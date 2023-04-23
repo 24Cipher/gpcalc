@@ -31,8 +31,9 @@ export function calcGrade(
 	unit: number,
 	pass: number
 ): [string, number] {
-	if (score === "-") {
-		return ["-", 0];
+	let matchScore = score.match(/(-|NIL|AB)/i);
+	if (matchScore) {
+		return [matchScore[0], 0];
 	}
 	const _score = parseInt(score);
 	if (_score < 40 || _score < pass) {
@@ -82,7 +83,12 @@ export function calculator(dataChunk: string[], courses: CourseData[]) {
 
 	// calc failed units
 	const failedUnits = units
-		.filter((unit, i) => 0 !== unit && parseInt(dataChunk[i]) < passMarks[i])
+		.filter(
+			(unit, i) =>
+				0 !== unit &&
+				(/(NIL|AB)/i.test(dataChunk[i]) ||
+					parseInt(dataChunk[i]) < passMarks[i])
+		)
 		.reduce((t, i) => {
 			t += i;
 			return t;
@@ -114,7 +120,7 @@ export function copier(
 		if (!node) {
 			return;
 		}
-    
+
 		// set range
 		const range = document.createRange();
 		range.selectNodeContents(node);

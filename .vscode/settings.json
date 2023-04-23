@@ -18,5 +18,5 @@
 	"[scss]": {
 		"editor.tabSize": 2
 	},
-	"files.autoSave": "afterDelay"
+	"files.autoSave": "off"
 }
