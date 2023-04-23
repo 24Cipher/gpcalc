@@ -166,10 +166,17 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				setShowCalcResult(null);
 				setCleanedResultData(null);
 
+				// val if file is a spreadsheet
+				if (!/\t/.test(resultData)) {
+					throw new Error(
+						"Ooops, it appears that result data is not a spreadsheet."
+					);
+				}
+
 				// clean result data
 				let _cleanedResultData = resultData
 					.split(/(\t|\n)/)
-					.filter((e) => e !== "\t" && e !== "\n")
+					.map((e) => e.replace(/(\\t|\\n)/g, " "))
 					.filter((e) => e.trim() !== "")
 					.reduce((arr: string[], itm: string) => {
 						itm = itm.trim();
@@ -189,9 +196,10 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 					}, []);
 
 				// get result data headings
+				// GPA will be used to identify where headings stops
 				const headingsLastItemIndex = _cleanedResultData.findIndex(
 					(e) => e.toLowerCase() === "gpa"
-				); // ie. GPA column
+				);
 				if (headingsLastItemIndex === -1) {
 					throw new Error("Oops, invalid result data format.");
 				}
@@ -213,8 +221,6 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 					.map((e) => (isNaN(e) ? 0 : e));
 
 				// update util states
-				// setCourseTitles(_courseTitles);
-				// setCourseUnits(_courseUnits);
 				setCleanedResultData(_cleanedResultData);
 
 				// val whether to add courses
@@ -246,9 +252,9 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 	return (
 		<>
 			<header>
-				<div className="doc-width p-tb-10 p-lr-20 flex justify-content-between align-items-center">
+				<nav className="doc-width p-tb-10 p-lr-20 flex justify-content-between align-items-center">
 					<h1>GPCALC</h1>
-				</div>
+				</nav>
 			</header>
 			<main className="p-tb-20 main-section">
 				<div className="doc-width p-lr-20">
@@ -276,7 +282,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 								>
 									Click here
 								</a>
-								<span>{" to see a sample of a result table template."}</span>
+								<span>{" to see a sample of a result sheet."}</span>
 							</li>
 						</ul>
 					</div>
@@ -316,7 +322,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 						<div className="selector m-t-20">
 							<div className="selector-elems">
 								<label htmlFor="resultTable">
-									<h3>Result table</h3>
+									<h3>Result sheet</h3>
 								</label>
 								<div className="m-t-10" style={{ position: "relative" }}>
 									{resultData !== "" && (
@@ -344,7 +350,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 										cols={30}
 										rows={10}
 										id="resultTable"
-										placeholder="Paste result table here"
+										placeholder="Paste result spreadsheet here"
 										onInput={(e) => setResultData(e.currentTarget.value.trim())}
 										ref={resultInput}
 										required
