@@ -305,7 +305,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 		let data = null;
 		try {
 			const version = (await (
-				await fetch("/version.json")
+				await fetch("./version.json")
 			).json()) as VersionProps;
 
 			data = {
