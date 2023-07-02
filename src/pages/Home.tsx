@@ -1,10 +1,28 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Course, { CourseData } from "../components/Course";
 import Dialogue, { DialogueTypes } from "../components/Dialogue";
-import { arrayChunk, calculator, copier } from "../utils/helpers";
+import {
+	arrayChunk,
+	calculator,
+	copier,
+	isStale,
+	stickBody,
+} from "../utils/helpers";
 
 interface HomeProps {
 	clearBodyStyles: () => void;
+}
+
+interface UpdateDataProps {
+	appVersion: string;
+	cacheVersion: number;
+	lastCheck: number;
+	hasUpdate: boolean;
+}
+
+interface VersionProps {
+	app: string;
+	cache: number;
 }
 
 export default function Home({ clearBodyStyles }: HomeProps) {
@@ -30,9 +48,13 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 	const [showCalcResult, setShowCalcResult] = useState<null | string[][]>(null);
 	const [resultTableCopied, setResultTableCopied] = useState(false);
 
+	const [update, setUpdate] = useState(false);
+	const [updating, setUpdating] = useState(false);
+
 	useEffect(() => {
 		// clear init body styles
 		clearBodyStyles();
+
 		// get couses stored in localstorage
 		setCourses(handleGetLocalCourses());
 	}, [clearBodyStyles]);
@@ -241,6 +263,97 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 		[resultData, useAddedCourses]
 	);
 
+	// update handling
+	const handleUpdate = async () => {
+		if ("caches" in window && "serviceWorker" in navigator) {
+			try {
+				setUpdate(false);
+
+				setUpdating(true);
+				stickBody();
+
+				const cacheNames = await caches.keys();
+				await Promise.all(
+					cacheNames.map((cacheName) => caches.delete(cacheName))
+				);
+
+				const registrations = await navigator.serviceWorker.getRegistrations();
+				registrations.forEach(async (registration) => {
+					if (registration.active?.scriptURL.includes("/gpcalc/")) {
+						await registration.unregister();
+					}
+				});
+
+				window.localStorage.removeItem("updateData");
+
+				window.location.reload();
+			} catch (error) {
+				console.error("Update error:", error);
+			}
+		}
+	};
+
+	const handleGetUpdateData = () => {
+		const data = window.localStorage.getItem("updateData");
+		if (!data) {
+			return null;
+		}
+		return JSON.parse(data) as UpdateDataProps;
+	};
+
+	const fetchVersion = async (oldUpdateData: UpdateDataProps | null) => {
+		let data = null;
+		try {
+			const version = (await (
+				await fetch("/version.json")
+			).json()) as VersionProps;
+
+			data = {
+				appVersion: version.app,
+				cacheVersion: version.cache,
+				lastCheck: new Date().getTime(),
+				hasUpdate: oldUpdateData?.cacheVersion
+					? version.cache > oldUpdateData.cacheVersion
+					: false,
+			} as UpdateDataProps;
+
+			window.localStorage.setItem("updateData", JSON.stringify(data));
+		} catch (error) {
+			console.log(error);
+		}
+		return data;
+	};
+
+	const handleCheckForUpdate = useCallback(async () => {
+		let updateData = handleGetUpdateData() || (await fetchVersion(null));
+
+		if (!updateData) {
+			return;
+		}
+
+		if (updateData?.hasUpdate) {
+			setUpdate(true);
+			return;
+		}
+
+		if (isStale(updateData.lastCheck, 60)) {
+			updateData = await fetchVersion(updateData);
+			if (!updateData) {
+				return;
+			}
+		}
+
+		setUpdate(updateData.hasUpdate);
+	}, []);
+
+	useEffect(() => {
+		window.addEventListener("online", handleCheckForUpdate);
+
+		return () => {
+			window.removeEventListener("online", handleCheckForUpdate);
+		};
+	}, []);
+
 	return (
 		<>
 			<header>
@@ -448,14 +561,6 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				</div>
 			</main>
 			<footer>
-				{/* <div
-					className="flex justify-content-center flex-wrap"
-					style={{ marginBottom: "15px" }}
-				>
-					<button type="button" className="p-5 p-lr-10">
-						Update
-					</button>
-				</div> */}
 				<div className="text-center doc-width p-lr-10">
 					<span>
 						&copy;
@@ -501,6 +606,27 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 					callbackOk={handleCalculation}
 					callbackCancel={() => setToggleReviewCourses(false)}
 				/>
+			)}
+			{update && (
+				<Dialogue
+					info={`Update is available, click "Ok" to continue.`}
+					type={DialogueTypes.confirm}
+					callbackOk={handleUpdate}
+					callbackCancel={() => setUpdate(false)}
+				/>
+			)}
+			{updating && (
+				<div
+					role="dialog"
+					className="modal"
+					style={{ backgroundColor: "#fff" }}
+				>
+					<div className="modal-content">
+						<p style={{ textAlign: "center", padding: "20px" }}>
+							Downloading update, please wait...
+						</p>
+					</div>
+				</div>
 			)}
 		</>
 	);

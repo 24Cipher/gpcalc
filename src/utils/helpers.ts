@@ -144,3 +144,7 @@ export function copier(
 		}
 	}
 }
+
+export function isStale(oldTime: number, intervalInMins: number) {
+	return (new Date().getTime() - oldTime) / 60000 > intervalInMins;
+}
