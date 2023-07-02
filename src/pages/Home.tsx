@@ -305,7 +305,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 		let data = null;
 		try {
 			const version = (await (
-				await fetch("./version.json")
+				await fetch(`./version.json?${new Date().getTime()}`)
 			).json()) as VersionProps;
 
 			data = {
@@ -315,7 +315,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				hasUpdate: oldUpdateData?.cacheVersion
 					? version.cache > oldUpdateData.cacheVersion
 					: false,
-			} as UpdateDataProps;
+			} as UpdateDataProps;			
 
 			window.localStorage.setItem("updateData", JSON.stringify(data));
 		} catch (error) {
