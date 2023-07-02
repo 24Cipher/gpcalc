@@ -31,7 +31,7 @@ export function calcGrade(
 	unit: number,
 	pass: number
 ): [string, number] {
-	let matchScore = score.match(/(-|NIL|AB)/i);
+	let matchScore = score.match(/(EL|NIL|AB)/i);
 	if (matchScore) {
 		return [matchScore[0], 0];
 	}
@@ -57,12 +57,12 @@ export function calcGrade(
 export function calculator(dataChunk: string[], courses: CourseData[]) {
 	// get all units
 	const units = courses.map((course, i) =>
-		"-" !== dataChunk[i] ? course[1] : 0
+		"EL" !== dataChunk[i] ? course[1] : 0
 	);
 
 	// get all pass mark
 	const passMarks = courses.map((course, i) =>
-		"-" !== dataChunk[i] ? course[2] : 0
+		"EL" !== dataChunk[i] ? course[2] : 0
 	);
 
 	// get total grade

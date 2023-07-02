@@ -190,7 +190,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				// get result data headings
 				// GPA will be used to identify where headings stops
 				const headingsLastItemIndex = _cleanedResultData.findIndex(
-					(e) => e.toLowerCase() === "gpa"
+					(e) => e.toLowerCase().replace(/\./g, "") === "gpa"
 				);
 				if (headingsLastItemIndex === -1) {
 					throw new Error("Oops, invalid result data format.");
@@ -261,11 +261,11 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 						<ul className="m-t-10" style={{ paddingLeft: "20px" }}>
 							<li>Do not leave any score column empty</li>
 							<li>
-								Use hyphen (-) in place of score for a course the student
+								Use EL (ie. elective) in place of score for a course the student
 								does/did not offer
 							</li>
 							<li>You can also use NIL in place of 0 (zero)</li>
-							<li>Use AB (ie. absent) or 0 (zero) for an absentee</li>
+							<li>Use AB (ie. absent) for an absentee</li>
 							<li>
 								<a
 									href="composite-result-template.xlsx"
