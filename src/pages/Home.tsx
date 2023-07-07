@@ -315,7 +315,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				hasUpdate: oldUpdateData?.cacheVersion
 					? version.cache > oldUpdateData.cacheVersion
 					: false,
-			} as UpdateDataProps;			
+			} as UpdateDataProps;
 
 			window.localStorage.setItem("updateData", JSON.stringify(data));
 		} catch (error) {
@@ -505,7 +505,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 												},
 												() =>
 													setToggleAlert(
-														"Copy comman failed, please try using native method."
+														"Copy command failed, please try using native method."
 													)
 											)
 										}
