@@ -284,7 +284,17 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 					}
 				});
 
-				window.localStorage.removeItem("updateData");
+				const updateData = handleGetUpdateData();
+				const newUpdateData: UpdateDataProps = {
+					appVersion: updateData?.appVersion || "",
+					cacheVersion: updateData?.cacheVersion || new Date().getTime(),
+					lastCheck: updateData?.lastCheck || new Date().getTime(),
+					hasUpdate: false,
+				};
+				window.localStorage.setItem(
+					"updateData",
+					JSON.stringify(newUpdateData)
+				);
 
 				window.location.reload();
 			} catch (error) {
@@ -314,7 +324,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 				lastCheck: new Date().getTime(),
 				hasUpdate: oldUpdateData?.cacheVersion
 					? version.cache > oldUpdateData.cacheVersion
-					: false,
+					: true,
 			} as UpdateDataProps;
 
 			window.localStorage.setItem("updateData", JSON.stringify(data));
@@ -347,6 +357,9 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 	}, []);
 
 	useEffect(() => {
+		if (navigator.onLine) {
+			handleCheckForUpdate();
+		}
 		window.addEventListener("online", handleCheckForUpdate);
 
 		return () => {
