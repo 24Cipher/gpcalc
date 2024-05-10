@@ -580,7 +580,7 @@ export default function Home({ clearBodyStyles }: HomeProps) {
 						{" " + new Date().getFullYear() + " "}
 					</span>
 					<a
-						href="https://24cipher.com?ref=gpcalc"
+						href="https://24cipher.xyz?ref=gpcalc"
 						target="_blank"
 						rel="noreferrer"
 					>
